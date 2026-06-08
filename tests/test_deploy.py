@@ -7,6 +7,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from deploy import (
+    CONFIGS,
+    MAC_PATH,
     DeployError,
     add_home_manager_channel,
     channel_exists,
@@ -187,14 +189,10 @@ class TestCopyConfigs:
     @patch("deploy.orb")
     def test_copies_all_configs(self, mock_orb):
         copy_configs("dev")
-        mock_orb.assert_called_once()
-        call_args = mock_orb.call_args[0]
-        assert call_args[0] == "-m"
-        assert call_args[1] == "dev"
-        assert call_args[2] == "sudo"
-        assert call_args[3] == "cp"
-        # Should have src/dst pairs for each config
-        assert len(call_args) > 4
+        assert mock_orb.call_count == len(CONFIGS)
+        for i, config in enumerate(CONFIGS):
+            call_args = mock_orb.call_args_list[i][0]
+            assert call_args == ("-m", "dev", "sudo", "cp", f"{MAC_PATH}/{config}", f"/etc/nixos/{config}")
 
     @patch("deploy.orb")
     def test_raises_on_failure(self, mock_orb):
@@ -294,6 +292,7 @@ class TestMain:
     @patch("deploy.machine_exists", return_value=False)
     @patch("deploy.orb")
     @patch("deploy.validate_config_files")
+    @patch("deploy.MACHINE", "dev")
     def test_full_deploy_new_machine(
         self, mock_validate, mock_orb, mock_exists,
         mock_create, mock_copy, mock_channel, mock_rebuild, capsys,
@@ -313,6 +312,7 @@ class TestMain:
     @patch("deploy.machine_exists", return_value=True)
     @patch("deploy.orb")
     @patch("deploy.validate_config_files")
+    @patch("deploy.MACHINE", "dev")
     def test_skips_create_when_exists(
         self, mock_validate, mock_orb, mock_exists,
         mock_create, mock_copy, mock_channel, mock_rebuild, capsys,
@@ -386,6 +386,7 @@ class TestMain:
     @patch("deploy.machine_exists", return_value=True)
     @patch("deploy.orb")
     @patch("deploy.validate_config_files")
+    @patch("deploy.MACHINE", "dev")
     def test_keyboard_interrupt_exits_130(
         self, mock_validate, mock_orb, mock_exists,
         mock_copy, mock_channel, mock_rebuild,
