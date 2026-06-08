@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   home.stateVersion = "25.05";
@@ -489,6 +489,18 @@
     config.theme = "TwoDark";
   };
 
+  # --- macOS symlinks (via OrbStack /mnt/mac mount) ---
+  home.activation.linkMacDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ ! -L "$HOME/.agents" ]; then
+      rm -rf "$HOME/.agents" 2>/dev/null || true
+      ln -s /mnt/mac/Users/sachawharton/.agents "$HOME/.agents"
+    fi
+    if [ ! -L "$HOME/.ccs" ]; then
+      rm -rf "$HOME/.ccs" 2>/dev/null || true
+      ln -s /mnt/mac/Users/sachawharton/.ccs "$HOME/.ccs"
+    fi
+  '';
+
   # --- Environment ---
   home.sessionVariables = {
     EDITOR = "nvim";
@@ -504,6 +516,11 @@
     DOCKER_CONFIG = "$XDG_CONFIG_HOME/docker";
     GNUPGHOME = "$XDG_DATA_HOME/gnupg";
     KREW_ROOT = "$XDG_DATA_HOME/krew";
+
+    # macOS mount paths
+    AGENTS_HOME = "$HOME/.agents";
+    CCS_HOME = "$HOME/.ccs";
+    CCS_MAC_HOME = "/mnt/mac/Users/sachawharton/.ccs";
 
     # PATH additions
     PATH = "$HOME/.local/bin:$HOME/.local/share/cargo/bin:$HOME/go/bin:$KREW_ROOT/bin:$PATH";
