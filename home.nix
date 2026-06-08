@@ -49,7 +49,7 @@
       eval "$(fzf --zsh)"
 
       # Tealdeer
-      complete -C tealdeer tldr
+      compdef _gnu_generic tldr
 
       # --- Shell functions ---
 
