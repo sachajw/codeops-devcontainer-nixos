@@ -9,9 +9,9 @@ from pathlib import Path
 MACHINE = sys.argv[1] if len(sys.argv) > 1 else "dev"
 USER = "tvl"
 DISTRO = "nixos"
-MEMORY = "8G"
-CPUS = "4"
-DISK = "64G"
+MEMORY = "4G"
+CPUS = "2"
+DISK = "8G"
 SCRIPT_DIR = Path(__file__).resolve().parent
 CONFIGS = ["configuration.nix", "home.nix"]
 MAC_PATH = f"/mnt/mac{SCRIPT_DIR}"
