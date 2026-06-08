@@ -24,19 +24,6 @@
   users.defaultUserShell = pkgs.zsh;
   programs.zsh.enable = true;
 
-  # OrbStack integration user — must match macOS username and UID
-  users.users.sachawharton = {
-    uid = 502;
-    extraGroups = [ "wheel" "orbstack" "audio" ];
-    isSystemUser = true;
-    group = "users";
-    createHome = true;
-    home = "/home/sachawharton";
-    homeMode = "700";
-    useDefaultShell = true;
-  };
-
-  # Dev user
   users.users.tvl = {
     uid = 1000;
     extraGroups = [ "wheel" "orbstack" "audio" "docker" ];
