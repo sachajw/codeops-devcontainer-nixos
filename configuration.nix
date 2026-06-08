@@ -214,6 +214,25 @@
     zsh-autosuggestions
     zsh-syntax-highlighting
     zsh-completions
+
+    # --- Fun ---
+    sl
+    cmatrix
+    fortune
+    toilet
+    cowsay
+    asciiquarium
+
+    # --- Extra tools (referenced by aliases/functions) ---
+    kubectx
+    xcp
+    safe-rm
+    mob
+    git-quick-stats
+    p7zip
+    unrar
+    ffmpeg
+    asciinema
   ];
 
   # Home Manager

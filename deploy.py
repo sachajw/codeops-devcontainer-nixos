@@ -146,9 +146,6 @@ def create_machine(name: str) -> None:
 def copy_configs(machine: str) -> None:
     """Copy NixOS config files into the machine via /mnt/mac.
 
-    Copies all config files in a single subprocess call to reduce
-    orb CLI startup overhead.
-
     Args:
         machine: Machine name to copy configs into.
 
@@ -156,13 +153,10 @@ def copy_configs(machine: str) -> None:
         DeployError: If any copy operation fails.
     """
     print("Applying configs...")
-    pairs = []
     for config in CONFIGS:
         src = f"{MAC_PATH}/{config}"
-        dst = f"/etc/nixos/{config}"
         print(f"  Copying {config}")
-        pairs.extend([src, dst])
-    orb("-m", machine, "sudo", "cp", *pairs)
+        orb("-m", machine, "sudo", "cp", src, f"/etc/nixos/{config}")
 
 
 def add_home_manager_channel(machine: str) -> None:
