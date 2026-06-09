@@ -235,6 +235,7 @@ in
     asciiquarium
 
     # --- Extra tools (referenced by aliases/functions) ---
+    kubeswitch
     kubectx
     xcp
     safe-rm

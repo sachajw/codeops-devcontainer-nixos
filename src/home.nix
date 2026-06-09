@@ -54,6 +54,11 @@
       # Tealdeer
       compdef _gnu_generic tldr
 
+      # Kubeswitch
+      eval "$(switcher init zsh)"
+      sw() { switch --kubeconfig-path ~/.config/kube/contexts "$@"; }
+      swscon() { switch --kubeconfig-path ~/.config/kube/contexts "$@"; }
+
       # --- Shell functions ---
 
       mkcd() { mkdir -p "$1" && cd "$1"; }
@@ -218,6 +223,18 @@
       # --- Zsh management ---
       szsh = "source ~/.zshrc";
       ezsh = "nvim ~/.zshrc";
+
+      # --- Kubeswitch ---
+      swclean = "switcher clean";
+      swexec = "switcher exec --kubeconfig-path ~/.config/kube/contexts";
+      swhelp = "switcher help";
+      swhist = "switcher history";
+      swhooks = "switcher hooks";
+      swlcon = "switcher list-contexts --kubeconfig-path ~/.config/kube/contexts";
+      swns = "switcher namespace";
+      swslcon = "switcher set-last-context";
+      swspcon = "switcher set-previous-context";
+      swver = "switcher version";
 
       # --- Shell ---
       c = "clear";
@@ -506,6 +523,27 @@
       rm -rf "$HOME/.ccs" 2>/dev/null || true
       ln -s /mnt/mac/Users/sachawharton/.ccs "$HOME/.ccs"
     fi
+  '';
+
+  # --- kubeswitch config and kube context symlinks ---
+  home.file.".kube/switch-config.yaml".text = ''
+    kind: SwitchConfig
+    version: v1alpha1
+    kubeconfigStores:
+    - kind: filesystem
+      kubeconfigName: "*.yaml"
+      paths:
+      - ~/.config/kube/contexts
+    stateDirectory: "$HOME/.kube/switch-state"
+  '';
+
+  home.activation.linkKubeContexts = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    mkdir -p "${config.xdg.configHome}/kube"
+    if [ ! -L "${config.xdg.configHome}/kube/contexts" ]; then
+      rm -rf "${config.xdg.configHome}/kube/contexts" 2>/dev/null || true
+      ln -s /mnt/mac/Users/sachawharton/.config/.kube/contexts "${config.xdg.configHome}/kube/contexts"
+    fi
+    mkdir -p "$HOME/.kube/switch-state"
   '';
 
   # --- pipx packages (pinned versions not available or broken in nixpkgs) ---
