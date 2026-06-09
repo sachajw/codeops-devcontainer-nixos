@@ -192,7 +192,7 @@
         local current
         current=$(kubectl config current-context 2>/dev/null)
         kubelogin get-token --login azurecli --server-id 6dae42f8-4368-4678-94ff-3960e28e3630 2>/dev/null
-        echo "Token refreshed for current context: ''$\{current:-none\}"
+        echo "Token refreshed for current context: ''${current:-none}"
       }
 
       # pre-commit config composer

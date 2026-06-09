@@ -1,5 +1,8 @@
 { config, pkgs, modulesPath, ... }:
 
+let
+  unstable = import (builtins.fetchTarball "channel:nixos-unstable") { config = pkgs.config; };
+in
 {
   imports = [
     # Container base config (filesystem, boot — required by OrbStack)
@@ -27,13 +30,14 @@
   users.users.tvl = {
     uid = 1000;
     extraGroups = [ "wheel" "orbstack" "audio" "docker" ];
-    isSystemUser = true;
+    isNormalUser = true;
     group = "users";
     createHome = true;
     home = "/home/tvl";
     homeMode = "700";
     useDefaultShell = true;
   };
+
 
   security.sudo.wheelNeedsPassword = false;
   users.mutableUsers = false;
@@ -101,6 +105,18 @@
     hcledit
     inframap
 
+    # Wiz CLI
+    (stdenv.mkDerivation rec {
+      pname = "wizcli";
+      version = "1.50.0";
+      src = fetchurl {
+        url = "https://downloads.wiz.io/v1/wizcli/${version}/wizcli-linux-amd64";
+        hash = "sha256-4Jkz3Xxm/5jMb5SN6nZN/eyeJjGosianMH931anVYMs=";
+      };
+      unpackPhase = "true";
+      installPhase = "install -Dm755 $src $out/bin/wizcli";
+    })
+
     # --- Containers ---
     docker
     docker-compose
@@ -128,6 +144,7 @@
 
     # --- CLI essentials ---
     jq
+    unstable.acli
     yq-go
     curl
     wget
