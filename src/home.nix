@@ -553,6 +553,16 @@
     fi
   '';
 
+  # --- uv tools (fast isolated installs) ---
+  home.activation.installUvTools = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if ! command -v headroom >/dev/null 2>&1; then
+      export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib"
+      export CC="${pkgs.stdenv.cc}/bin/gcc"
+      export CXX="${pkgs.stdenv.cc}/bin/g++"
+      ${pkgs.uv}/bin/uv tool install "headroom-ai[all]" --python ${pkgs.python3}/bin/python3
+    fi
+  '';
+
   # --- Environment ---
   home.sessionVariables = {
     EDITOR = "nvim";
@@ -579,5 +589,8 @@
 
     # PATH additions
     PATH = "$HOME/.local/bin:$HOME/.local/share/cargo/bin:$HOME/go/bin:${config.xdg.dataHome}/krew/bin:$PATH";
+
+    # Native library path for pre-built wheels (headroom, etc.)
+    LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
   };
 }

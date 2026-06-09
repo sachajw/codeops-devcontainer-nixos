@@ -26,6 +26,10 @@ in
   # Default shell
   users.defaultUserShell = pkgs.zsh;
   programs.zsh.enable = true;
+  programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    stdenv.cc.cc.lib
+  ];
 
   users.users.tvl = {
     uid = 1000;
@@ -117,6 +121,10 @@ in
       installPhase = "install -Dm755 $src $out/bin/wizcli";
     })
 
+    # --- AIOPs ---
+    claude-code
+
+
     # --- Containers ---
     docker
     docker-compose
@@ -128,19 +136,22 @@ in
     syft
     trivy
 
-    # --- Languages ---
+    # --- CodeOps ---
     nodejs
     python3
     go
     bun
+    uv
+    ruff
 
-    # --- Git ---
+    # --- SCM ---
     git
     git-lfs
     delta
     git-filter-repo
     ripsecrets
     gh
+    reposurgeon
 
     # --- CLI essentials ---
     jq
@@ -180,7 +191,7 @@ in
     diff-so-fancy
     usql
 
-    # --- Security ---
+    # --- SecOps ---
     sops
     age
     gnupg
@@ -189,14 +200,18 @@ in
     trufflehog
     gitleaks
     scorecard
+    bitwarden-cli
+    bws
 
-    # --- Network ---
+    # --- NetOps ---
     nmap
     socat
     websocat
     mosh
     bandwhich
     gping
+
+    gcc
 
     # --- Dev tools ---
     pre-commit
