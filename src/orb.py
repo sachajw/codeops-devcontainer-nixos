@@ -100,7 +100,7 @@ def channel_exists(machine: str, channel_name: str) -> bool:
     """
     try:
         result = subprocess.run(
-            ["orb", "-m", machine, "sudo", "nix-channel", "--list"],
+            ["orb", "-m", machine, "-u", "root", "nix-channel", "--list"],
             capture_output=True,
             text=True,
             check=False,

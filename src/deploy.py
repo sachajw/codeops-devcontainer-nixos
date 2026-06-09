@@ -53,7 +53,7 @@ def copy_configs(machine: str) -> None:
     for config in CONFIGS:
         src = f"{MAC_PATH}/{config}"
         print(f"  Copying {config}")
-        orb("-m", machine, "sudo", "cp", src, f"/etc/nixos/{config}")
+        orb("-m", machine, "-u", "root", "cp", src, f"/etc/nixos/{config}")
 
 
 def add_home_manager_channel(machine: str) -> None:
@@ -71,10 +71,10 @@ def add_home_manager_channel(machine: str) -> None:
     print("Adding Home Manager channel...")
     if not channel_exists(machine, "home-manager"):
         orb(
-            "-m", machine, "sudo", "nix-channel", "--add",
+            "-m", machine, "-u", "root", "nix-channel", "--add",
             HOME_MANAGER_URL, "home-manager",
         )
-    orb("-m", machine, "sudo", "nix-channel", "--update")
+    orb("-m", machine, "-u", "root", "nix-channel", "--update")
 
 
 def rebuild(machine: str) -> None:
@@ -89,7 +89,7 @@ def rebuild(machine: str) -> None:
         DeployError: If nixos-rebuild fails, with actionable hints.
     """
     print("Running nixos-rebuild switch (first run may take a while)...")
-    result = orb_run("-m", machine, "sudo", "nixos-rebuild", "switch")
+    result = orb_run("-m", machine, "-u", "root", "nixos-rebuild", "switch")
     if result.returncode != 0:
         raise DeployError(
             f"nixos-rebuild switch failed on '{machine}' (exit {result.returncode}).\n"

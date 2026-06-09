@@ -110,8 +110,8 @@ in
       pname = "wizcli";
       version = "1.50.0";
       src = fetchurl {
-        url = "https://downloads.wiz.io/v1/wizcli/${version}/wizcli-linux-amd64";
-        hash = "sha256-4Jkz3Xxm/5jMb5SN6nZN/eyeJjGosianMH931anVYMs=";
+        url = "https://downloads.wiz.io/v1/wizcli/${version}/wizcli-linux-arm64";
+        hash = "sha256-qedvItVFvMft/jjosdlIp5hW1MvW3rmfmDjuM3mmdMo=";
       };
       unpackPhase = "true";
       installPhase = "install -Dm755 $src $out/bin/wizcli";

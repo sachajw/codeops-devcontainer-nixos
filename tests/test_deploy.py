@@ -77,6 +77,8 @@ class TestValidateConfigFiles:
     def test_all_files_exist(self, tmp_path):
         (tmp_path / "configuration.nix").write_text("# config")
         (tmp_path / "home.nix").write_text("# home")
+        (tmp_path / "orbstack.nix").write_text("# orbstack")
+        (tmp_path / "incus.nix").write_text("# incus")
 
         with patch("config.SCRIPT_DIR", tmp_path):
             validate_config_files()
@@ -264,7 +266,7 @@ class TestCopyConfigs:
         assert mock_orb.call_count == len(CONFIGS)
         for i, config in enumerate(CONFIGS):
             call_args = mock_orb.call_args_list[i][0]
-            assert call_args == ("-m", "dev", "sudo", "cp", f"{MAC_PATH}/{config}", f"/etc/nixos/{config}")
+            assert call_args == ("-m", "dev", "-u", "root", "cp", f"{MAC_PATH}/{config}", f"/etc/nixos/{config}")
 
     @patch("deploy.orb")
     def test_raises_on_failure(self, mock_orb):

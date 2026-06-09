@@ -11,7 +11,7 @@ MEMORY = "4G"
 CPUS = "2"
 DISK = "64G"
 SCRIPT_DIR = Path(__file__).resolve().parent
-CONFIGS = ["configuration.nix", "home.nix"]
+CONFIGS = ["configuration.nix", "home.nix", "orbstack.nix", "incus.nix"]
 MAC_PATH = f"/mnt/mac{SCRIPT_DIR}"
 HOME_MANAGER_URL = (
     "https://github.com/nix-community/home-manager/archive/release-25.05.tar.gz"
