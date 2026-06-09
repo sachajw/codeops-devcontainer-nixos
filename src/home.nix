@@ -170,6 +170,10 @@
         if ! command -v fzf >/dev/null 2>&1; then
           echo "fzf not found"; return 1
         fi
+        if az account list -o none 2>&1 | grep -q 'az login'; then
+          echo "Not logged in. Starting device-code login..."
+          az login --use-device-code || return 1
+        fi
         local sub_line sub_id sub_name
         sub_line=$(az account list --query '[].{Name:name, Id:id}' -o tsv \
           | awk -F'\t' '{printf "%-40s %s\n", $1, $2}' \

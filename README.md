@@ -12,7 +12,7 @@ Reproducible NixOS development environment running as an OrbStack Linux machine.
 ```bash
 git clone git@github.com:sachajw/codeops-devcontainer-nixos.git
 cd codeops-devcontainer-nixos
-python3 deploy.py
+python3 src/deploy.py
 ```
 
 This creates a NixOS machine named `dev` in OrbStack and applies the configuration.
@@ -35,8 +35,8 @@ orb -m dev -u tvl terraform plan
 | Machine name | `dev` |
 | User | `tvl` (uid 1000) |
 | OS | NixOS 25.11 |
-| RAM | 8 GB |
-| CPUs | 4 |
+| RAM | 4 GB |
+| CPUs | 2 |
 | Disk | 64 GB |
 | Shell | zsh + starship |
 
@@ -47,7 +47,7 @@ orb -m dev -u tvl terraform plan
 | Category | Packages |
 |----------|----------|
 | **Kubernetes** | kubectl, kubecolor, helm, stern, krew, argocd, fluxcd, kubectx, kubelogin, kompose, polaris, kor, kubeshark, chart-testing |
-| **IaC** | terraform, terragrunt, terramate, tflint, infracost, ansible, azure-cli, awscli2 |
+| **IaC** | terraform, terragrunt, terramate, tflint, infracost, ansible, azure-cli, azd (custom derivation), awscli2 |
 | **Containers** | docker, docker-compose, crane, skopeo, dive, lazydocker, trivy, syft |
 | **Languages** | nodejs, python3, go, bun |
 | **Git** | git, git-lfs, delta, gh, git-filter-repo, ripsecrets |
@@ -91,25 +91,42 @@ orb -m dev -u tvl terraform plan
 - `EDITOR` / `VISUAL` = nvim
 - `KUBECONFIG` = `~/.kube/config`
 - `KUBE_EDITOR` = nvim
-- XDG paths for AWS, Azure, Docker, GPG, Krew
+- XDG paths for AWS, Azure, azd, Docker, GPG, Krew
 - kubectl shorthands: `$do` (dry-run yaml), `$now` (force delete), `$dry`
+
+## File Structure
+
+```
+src/
+  config.py            Constants, machine name validation
+  orb.py               OrbStack CLI wrapper
+  deploy.py            Deploy orchestration (create, copy, rebuild)
+  configuration.nix    System packages, users, networking, Home Manager
+  home.nix             Shell config, git, nvim, starship, env vars
+tests/
+  test_deploy.py       Full test coverage for deploy pipeline
+docs/
+  gui-desktop.md       GUI/desktop setup notes
+```
+
+Root-level `configuration.nix` and `home.nix` are pre-refactor originals; `src/` versions are the active ones.
 
 ## Adding Packages
 
-Edit `configuration.nix` and add your package to `environment.systemPackages`, then re-deploy:
+Edit `src/configuration.nix` and add your package to `environment.systemPackages`, then re-deploy:
 
 ```bash
-python3 deploy.py
+python3 src/deploy.py
 ```
 
-Verify package names at [search.nixos.org](https://search.nixos.org).
+Verify package names at [search.nixos.org](https://search.nixos.org). For packages not in nixpkgs, add an inline `stdenv.mkDerivation` derivation (see `azd` in `src/configuration.nix` for an example).
 
 ## Modifying Shell Config
 
-All aliases, functions, and env vars live in `home.nix` under `programs.zsh`. Edit and redeploy:
+All aliases, functions, and env vars live in `src/home.nix` under `programs.zsh`. Edit and redeploy:
 
 ```bash
-python3 deploy.py
+python3 src/deploy.py
 ```
 
 Note: The `''$\{...\}` syntax in `initContent` is Nix string interpolation escaping — double single quotes and escaped dollar signs.
@@ -117,7 +134,7 @@ Note: The `''$\{...\}` syntax in `initContent` is Nix string interpolation escap
 ## Testing
 
 ```bash
-python3 -m pytest tests/ -v                            # Run all 47 tests
+python3 -m pytest tests/ -v                            # Run all tests
 python3 -m pytest tests/test_deploy.py::TestMain -v    # Run a single test class
 ```
 
@@ -129,7 +146,7 @@ Update all packages by rebuilding:
 
 ```bash
 orb -m dev -u tvl sudo nix-channel --update
-python3 deploy.py
+python3 src/deploy.py
 ```
 
 ## Rollback
@@ -154,14 +171,82 @@ Import on another Mac:
 orb import -n dev dev-backup.tar.zst
 ```
 
-## File Structure
+## NixOS
+
+The machine runs NixOS 25.11 on channels (not flakes). Home Manager tracks `release-25.05`.
+
+### Config Layout
+
+| File | Scope |
+|------|-------|
+| `src/configuration.nix` | System packages, users, networking, Docker, Home Manager import |
+| `src/home.nix` | User `tvl`: zsh, git, nvim, starship, direnv, bat, aliases, functions, env vars |
+
+Changes to either file require a deploy (`python3 src/deploy.py`) to take effect. NixOS is declarative — manual changes inside the machine are lost on rebuild.
+
+### Useful Commands (inside the machine)
+
+```bash
+# Package management
+nix-env -qaP <pkg>                # Search for a package
+nix-env -qaP --installed <pkg>    # Check if a package is installed
+nix-store --query --references /run/current-system/sw  # List all system packages
+
+# System maintenance
+nix-collect-garbage -d            # Remove old generations and free disk
+nix-store --optimise              # Hard-link identical files to save space
+nixos-rebuild switch --rollback   # Roll back to previous generation
+
+# Inspect config
+nixos-option services.docker.enable   # Check a NixOS option value
+nixos-version                         # Show current NixOS version
+
+# Home Manager (run as tvl, not root)
+home-manager generations           # List all HM generations
+home-manager rollback              # Roll back user config
+```
+
+### Channels
+
+```bash
+# List channels
+nix-channel --list
+
+# Update all channels (pulls latest package versions)
+sudo nix-channel --update
+
+# Then redeploy to apply
+exit  # back to macOS
+python3 src/deploy.py
+```
+
+### macOS Mount
+
+OrbStack exposes the macOS filesystem at `/mnt/mac/`. The deploy script copies configs through this mount. Your macOS home is at:
 
 ```
-configuration.nix   System packages, user, Docker, networking, Home Manager
-home.nix            Shell aliases (150+), functions (15+), git, nvim, starship, env vars
-deploy.py           One-command deploy script (47 tests, 99% coverage)
-tests/              Full test coverage for deploy.py
+/mnt/mac/Users/sachawharton/
 ```
+
+The `home.nix` activation script symlinks `.agents` and `.ccs` from macOS into the NixOS home for cross-machine tool access.
+
+### Azure Login
+
+`az` is installed but requires authentication per-machine. The `azten` function handles this automatically — if not logged in, it triggers device-code login before showing the fzf subscription picker. To log in manually:
+
+```bash
+az login --use-device-code
+```
+
+### Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Package not found | Verify name at [search.nixos.org](https://search.nixos.org), check channel is up to date (`sudo nix-channel --update`) |
+| Build fails after adding a package | Run `orb -m dev sudo nixos-rebuild switch --show-trace` for the full error |
+| Disk full | `nix-collect-garbage -d` removes old generations |
+| Config change not applying | Make sure you edited `src/` files, not root-level ones — then redeploy |
+| `az account list` is empty | Run `az login --use-device-code` (or just run `azten`) |
 
 ## OrbStack Integration
 
@@ -174,8 +259,3 @@ tests/              Full test coverage for deploy.py
 | Network | Services at `localhost` from macOS |
 | VPN | Follows macOS VPN/DNS automatically |
 | SSL certs | Uses macOS keychain |
-
-## Known Issues
-
-- `configuration.nix` imports `./orbstack.nix` and `./incus.nix` which don't exist yet — these are placeholders for future config
-- Home Manager channel tracks `release-25.05`; NixOS state version is `25.11`
