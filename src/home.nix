@@ -508,6 +508,13 @@
     fi
   '';
 
+  # --- pipx packages (pinned versions not available or broken in nixpkgs) ---
+  home.activation.installPipxPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if ! command -v az >/dev/null 2>&1; then
+      ${pkgs.pipx}/bin/pipx install azure-cli
+    fi
+  '';
+
   # --- Environment ---
   home.sessionVariables = {
     EDITOR = "nvim";

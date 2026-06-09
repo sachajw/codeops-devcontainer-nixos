@@ -87,7 +87,7 @@
     tflint
     infracost
     ansible
-    azure-cli
+
     (stdenv.mkDerivation rec {
       pname = "azd";
       version = "1.25.5";
