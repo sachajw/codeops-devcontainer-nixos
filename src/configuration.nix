@@ -96,7 +96,7 @@
         hash = "sha256-h45MPTkA/qTmXV56A3GCjKEnoKx9G1jALEpa81ZNHEk=";
       };
       sourceRoot = ".";
-      installPhase = "install -Dm755 azd -t $out/bin";
+      installPhase = "install -Dm755 azd-linux-amd64 $out/bin/azd";
     })
     hcledit
     inframap
@@ -162,7 +162,6 @@
     lynx
     diff-so-fancy
     usql
-    acli
 
     # --- Security ---
     sops
