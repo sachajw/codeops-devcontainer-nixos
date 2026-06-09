@@ -4,6 +4,9 @@
   home.stateVersion = "25.05";
   home.enableNixpkgsReleaseCheck = false;
 
+  # XDG base directories — must be set before sessionVariables that reference them
+  xdg.enable = true;
+
   # --- Zsh ---
   programs.zsh = {
     enable = true;
@@ -509,13 +512,15 @@
     KUBE_EDITOR = "nvim";
     KUBECONFIG_CONTEXT_DEADLINE = "300";
 
-    # XDG
-    AWS_SHARED_CREDENTIALS_FILE = "$XDG_CONFIG_HOME/aws/credentials";
-    AWS_CONFIG_FILE = "$XDG_CONFIG_HOME/aws/config";
-    AZURE_CONFIG_DIR = "$XDG_DATA_HOME/azure";
-    DOCKER_CONFIG = "$XDG_CONFIG_HOME/docker";
-    GNUPGHOME = "$XDG_DATA_HOME/gnupg";
-    KREW_ROOT = "$XDG_DATA_HOME/krew";
+    # XDG-derived paths — use Nix interpolation to avoid ordering issues
+    # (HM sorts sessionVariables alphabetically, so $XDG_* refs resolve
+    # before XDG_* exports in hm-session-vars.sh)
+    AWS_SHARED_CREDENTIALS_FILE = "${config.xdg.configHome}/aws/credentials";
+    AWS_CONFIG_FILE = "${config.xdg.configHome}/aws/config";
+    AZURE_CONFIG_DIR = "${config.xdg.dataHome}/azure";
+    DOCKER_CONFIG = "${config.xdg.configHome}/docker";
+    GNUPGHOME = "${config.xdg.dataHome}/gnupg";
+    KREW_ROOT = "${config.xdg.dataHome}/krew";
 
     # macOS mount paths
     AGENTS_HOME = "$HOME/.agents";
@@ -523,6 +528,6 @@
     CCS_MAC_HOME = "/mnt/mac/Users/sachawharton/.ccs";
 
     # PATH additions
-    PATH = "$HOME/.local/bin:$HOME/.local/share/cargo/bin:$HOME/go/bin:$KREW_ROOT/bin:$PATH";
+    PATH = "$HOME/.local/bin:$HOME/.local/share/cargo/bin:$HOME/go/bin:${config.xdg.dataHome}/krew/bin:$PATH";
   };
 }
