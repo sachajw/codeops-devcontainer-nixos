@@ -230,6 +230,25 @@ OrbStack exposes the macOS filesystem at `/mnt/mac/`. The deploy script copies c
 
 The `home.nix` activation script symlinks `.agents` and `.ccs` from macOS into the NixOS home for cross-machine tool access.
 
+### Tools Built from Source
+
+Some tools are built from local source repos (accessible via `/mnt/mac/`) during the first deploy activation:
+
+| Tool | Source | Why |
+|------|--------|-----|
+| **headroom-ai** | `~/Documents/repos/aiops/aiops-headroom` | PyPI wheel ships Python-only; building from source compiles the PyO3 Rust extension (`headroom._core`) for full proxy functionality |
+| **rustup** (1.95.0) | `https://sh.rustup.rs` | headroom pins rustc 1.95.0 in `rust-toolchain.toml`; nixpkgs ships 1.91.x which is too old |
+
+The Rust toolchain is installed to `~/.local/share/rustup/` with `--no-modify-path` (PATH is managed by `home.sessionVariables`). If the macOS source repo mount is unavailable, headroom falls back to the PyPI wheel (Python-only, no Rust extension).
+
+To rebuild headroom after source changes:
+```bash
+orb -m dev -u tvl
+uv tool install --force "/mnt/mac/Users/sachawharton/Documents/repos/aiops/aiops-headroom[all]"
+```
+
+Headroom proxy runs as a systemd user service (auto-starts on login). Dashboard: **http://localhost:8787/dashboard**
+
 ### Azure Login
 
 `az` is installed but requires authentication per-machine. The `azten` function handles this automatically — if not logged in, it triggers device-code login before showing the fzf subscription picker. To log in manually:
@@ -247,6 +266,7 @@ az login --use-device-code
 | Disk full | `nix-collect-garbage -d` removes old generations |
 | Config change not applying | Make sure you edited `src/` files, not root-level ones — then redeploy |
 | `az account list` is empty | Run `az login --use-device-code` (or just run `azten`) |
+| `headroom._core` import fails | Rebuild from source: `uv tool install --force "/mnt/mac/.../aiops-headroom[all]"` (requires rustup 1.95.0) |
 
 ## OrbStack Integration
 

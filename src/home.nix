@@ -553,13 +553,39 @@
     fi
   '';
 
-  # --- uv tools (fast isolated installs) ---
-  home.activation.installUvTools = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  # --- Rust toolchain (rustup for pinned version) ---
+  # headroom requires rustc 1.95.0 (pinned in rust-toolchain.toml).
+  # nixpkgs ships 1.91.x, so we use rustup to get the exact version.
+  # --no-modify-path because PATH is managed by home.sessionVariables.
+  home.activation.installRustToolchain = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    export RUSTUP_HOME="$HOME/.local/share/rustup"
+    export CARGO_HOME="$HOME/.local/share/cargo"
+    if [ ! -x "$CARGO_HOME/bin/rustc" ]; then
+      mkdir -p "$RUSTUP_HOME" "$CARGO_HOME"
+      export PATH="${pkgs.curl}/bin:${pkgs.bash}/bin:$PATH"
+      ${pkgs.curl}/bin/curl -sSf https://sh.rustup.rs | sh -s -- \
+        -y --default-toolchain 1.95.0 --profile minimal --no-modify-path
+    fi
+  '';
+
+  # --- uv tools (built from source with Rust extension) ---
+  # Builds from the local headroom repo via /mnt/mac/ to include the PyO3
+  # native extension (headroom._core). Falls back to PyPI if mount is absent.
+  home.activation.installUvTools = lib.hm.dag.entryAfter [ "writeBoundary" "installRustToolchain" ] ''
     if ! command -v headroom >/dev/null 2>&1; then
       export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib"
       export CC="${pkgs.stdenv.cc}/bin/gcc"
       export CXX="${pkgs.stdenv.cc}/bin/g++"
-      ${pkgs.uv}/bin/uv tool install "headroom-ai[all]" --python ${pkgs.python3}/bin/python3
+      export RUSTUP_HOME="$HOME/.local/share/rustup"
+      export CARGO_HOME="$HOME/.local/share/cargo"
+      export PATH="$CARGO_HOME/bin:$PATH"
+      if [ -d "/mnt/mac/Users/sachawharton/Documents/repos/aiops/aiops-headroom" ]; then
+        ${pkgs.uv}/bin/uv tool install \
+          --python ${pkgs.python3}/bin/python3 \
+          "/mnt/mac/Users/sachawharton/Documents/repos/aiops/aiops-headroom[all]"
+      else
+        ${pkgs.uv}/bin/uv tool install "headroom-ai[all]" --python ${pkgs.python3}/bin/python3
+      fi
     fi
   '';
 

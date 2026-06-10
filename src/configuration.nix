@@ -143,6 +143,7 @@ in
     bun
     uv
     ruff
+    unstable.worktrunk
 
     # --- SCM ---
     git

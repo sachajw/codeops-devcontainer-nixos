@@ -47,3 +47,5 @@ python3 -m pytest tests/test_deploy.py::TestValidateMachineName -v  # Run a sing
 - **Flakes:** Enabled but configs use channels, not flakes.
 - **Tests:** `tests/test_deploy.py` mocks `subprocess.run` and the `orb` helper — no OrbStack needed.
 - **Commit format:** Emoji-prefixed conventional commits (e.g. `✨ FEATURE:`, `🐛 FIX:`, `📝 DOC:`).
+- **Tools built from source:** headroom-ai is built from `/mnt/mac/.../aiops-headroom` (not PyPI) so maturin compiles the PyO3 Rust extension (`headroom._core`). Requires rustup toolchain 1.95.0 (pinned in headroom's `rust-toolchain.toml`); nixpkgs rustc 1.91.x is too old. Both are installed by home-manager activation scripts (`installRustToolchain`, `installUvTools`). Falls back to PyPI wheel if the macOS mount is absent.
+- **Activation script PATH:** Home Manager activation scripts run in a minimal environment — system packages like `curl` are NOT on PATH. Use `${pkgs.curl}/bin/curl` (Nix store paths) instead of bare `curl`. Shell profile files (`~/.zshenv` etc.) are read-only Nix symlinks — use `--no-modify-path` for rustup.
